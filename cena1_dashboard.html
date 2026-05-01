@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CENA 1 · Dashboard de Equipe</title>
+<style>
+:root {
+  --bg: #08080a;
+  --s1: #111115;
+  --s2: #18181e;
+  --s3: #202028;
+  --border: rgba(255,255,255,0.07);
+  --t1: #eeedf5;
+  --t2: #9998a8;
+  --t3: #55546a;
+  --purple: #afa9ec; --purple-bg: #3c3489; --purple-glow: rgba(108,99,212,0.15);
+  --green:  #5dcba8; --green-bg:  #085041; --green-glow:  rgba(93,203,168,0.12);
+  --orange: #f09a7b; --orange-bg: #711b13; --orange-glow: rgba(240,154,123,0.12);
+  --blue:   #85b7eb; --blue-bg:   #0c447c; --blue-glow:   rgba(133,183,235,0.12);
+  --amber:  #ef9f27; --amber-bg:  #633806; --amber-glow:  rgba(239,159,39,0.12);
+  --stone:  #b4b2a9; --stone-bg:  #444441; --stone-glow:  rgba(180,178,169,0.08);
+  --r: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--t1); font-family: -apple-system,'Helvetica Neue',sans-serif; height: 100%; overflow: hidden; }
+
+/* HEADER */
+.header { display:flex; align-items:center; justify-content:space-between; padding:10px 20px; border-bottom:1px solid var(--border); background:var(--s1); height:50px; flex-shrink:0; }
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-mark { width:28px;height:28px;background:var(--purple-bg);border:1px solid var(--purple);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--purple);letter-spacing:-0.5px; }
+.logo-title { font-size:13px;font-weight:600;color:var(--t1);letter-spacing:0.3px; }
+.logo-sub { font-size:10px;color:var(--t3); }
+.header-right { display:flex;align-items:center;gap:10px; }
+.status-pill { display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--s3);border:1px solid var(--border);border-radius:20px; }
+.dot { width:6px;height:6px;border-radius:50%;background:var(--stone);transition:all .3s; }
+.dot.live { background:var(--green);box-shadow:0 0 6px var(--green); }
+.dot.err  { background:var(--orange); }
+.dot.load { background:var(--amber);animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.status-txt { font-size:10px;color:var(--t3); }
+.btn { background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit; }
+.btn:hover { background:var(--s2);color:var(--t1);border-color:rgba(255,255,255,.15); }
+
+/* TABS */
+.tabs { display:flex;gap:2px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--s1);flex-shrink:0; }
+.tab { padding:5px 14px;font-size:12px;color:var(--t3);border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent;background:none;font-family:inherit;display:flex;align-items:center;gap:6px; }
+.tab:hover { color:var(--t2);background:var(--s3); }
+.tab.active { color:var(--t1);background:var(--s3);border-color:var(--border); }
+.tab-badge { background:var(--orange-bg);color:var(--orange);font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600; }
+
+/* CONTENT */
+.app { display:flex;flex-direction:column;height:100vh; }
+.content { flex:1;overflow-y:auto;overflow-x:hidden;padding:20px; }
+.content::-webkit-scrollbar { width:4px; }
+.content::-webkit-scrollbar-track { background:transparent; }
+.content::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* SECTION HEADER */
+.sec-header { margin-bottom:16px; }
+.sec-title { font-size:14px;font-weight:600;color:var(--t1); }
+.sec-sub { font-size:11px;color:var(--t3);margin-top:3px; }
+
+/* ORG TREE */
+.org-wrap { background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:auto; }
+.org-svg { display:block; }
+
+/* TIMELINE */
+.tl-wrap { background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:20px;overflow-x:auto; }
+.tl-inner { min-width:700px; }
+.tl-header-row { display:grid;grid-template-columns:160px 1fr;margin-bottom:4px; }
+.tl-months { display:flex;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:2px; }
+.tl-month { flex:1;text-align:center;font-size:9px;color:var(--t3);font-weight:500;text-transform:uppercase;letter-spacing:.3px; }
+.tl-month.now { color:var(--purple); }
+.tl-row { display:grid;grid-template-columns:160px 1fr;align-items:center;min-height:34px;border-bottom:1px solid rgba(255,255,255,.03); }
+.tl-row:hover { background:rgba(255,255,255,.015); }
+.tl-person { padding:4px 12px 4px 0; }
+.tl-name { font-size:11px;color:var(--t1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.tl-role { font-size:9px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.tl-bars { position:relative;height:34px;display:flex;align-items:center; }
+.tl-bar { position:absolute;height:14px;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:600;white-space:nowrap;overflow:hidden; }
+.tl-dot { position:absolute;width:7px;height:7px;border-radius:50%;border:2px solid var(--bg);z-index:2;transform:translateX(-50%); }
+.tl-dep { position:absolute;width:2px;top:6px;bottom:6px;border-radius:1px;z-index:3; }
+.tl-now { position:absolute;top:0;bottom:0;width:1px;background:rgba(175,169,236,.25);z-index:1; }
+.tl-grid { position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.03); }
+.tl-legend { display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid var(--border); }
+.tl-legend-item { display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t3); }
+
+/* DEPENDENCIES */
+.deps-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px; }
+.dep-card { background:var(--s2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .15s; }
+.dep-card:hover { border-color:rgba(255,255,255,.12); }
+.dep-head { padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px; }
+.dep-av { width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0; }
+.dep-info { flex:1;min-width:0; }
+.dep-name { font-size:12px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.dep-role { font-size:10px;color:var(--t3); }
+.dep-body { padding:12px 14px; }
+.dep-item { display:flex;align-items:flex-start;gap:8px;margin-bottom:8px; }
+.dep-item:last-child { margin-bottom:0; }
+.dep-ico { width:18px;height:18px;background:var(--s3);border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;margin-top:1px; }
+.dep-what { font-size:11px;color:var(--t2);line-height:1.4; }
+.dep-when { font-size:10px;font-weight:600;margin-top:2px; }
+.urg-red    { color:var(--orange); }
+.urg-amber  { color:var(--amber); }
+.urg-yellow { color:#d4c44a; }
+.urg-green  { color:var(--green); }
+.badge { display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600; }
+.badge-red    { background:var(--orange-glow);color:var(--orange); }
+.badge-amber  { background:var(--amber-glow);color:var(--amber); }
+.badge-yellow { background:rgba(212,196,74,.1);color:#d4c44a; }
+.badge-green  { background:var(--green-glow);color:var(--green); }
+.no-deps { background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:16px;grid-column:1/-1; }
+.no-deps-title { font-size:11px;color:var(--t3);margin-bottom:10px; }
+.tag-chips { display:flex;flex-wrap:wrap;gap:6px; }
+.chip { padding:3px 10px;border-radius:4px;font-size:10px;font-weight:500; }
+
+/* CHECKLIST */
+.csv-bar { display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:16px; }
+.csv-label { font-size:10px;color:var(--t3);flex-shrink:0; }
+.csv-input { flex:1;background:var(--s3);border:1px solid var(--border);color:var(--t1);font-size:10px;padding:5px 8px;border-radius:5px;font-family:monospace;min-width:0; }
+.csv-input:focus { outline:none;border-color:rgba(175,169,236,.4); }
+.prog-wrap { background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:20px; }
+.prog-bar-outer { flex:1;background:var(--s3);border-radius:4px;height:6px;overflow:hidden; }
+.prog-bar-inner { height:100%;background:var(--green);border-radius:4px;transition:width .6s ease; }
+.prog-txt { font-size:12px;color:var(--t2);flex-shrink:0;white-space:nowrap; }
+.prog-pct { font-weight:700;color:var(--green); }
+.cl-table { width:100%;border-collapse:collapse;font-size:11px; }
+.cl-table th { text-align:left;color:var(--t3);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;border-bottom:1px solid var(--border); }
+.cl-table td { padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.025);color:var(--t2);vertical-align:middle; }
+.cl-table tr:hover td { background:rgba(255,255,255,.015); }
+.cl-section td { background:var(--s2);color:var(--t3);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:8px 10px; }
+.s-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600; }
+.s-done    { background:var(--green-glow);color:var(--green); }
+.s-wip     { background:var(--blue-glow);color:var(--blue); }
+.s-pend    { background:var(--amber-glow);color:var(--amber); }
+.s-none    { background:var(--s3);color:var(--t3); }
+.empty-state { text-align:center;padding:48px;color:var(--t3);font-size:12px;line-height:1.7; }
+.empty-icon { font-size:32px;margin-bottom:12px; }
+.err-box { background:rgba(240,154,123,.04);border:1px solid rgba(240,154,123,.2);border-radius:var(--r);padding:16px 20px;color:var(--orange);font-size:12px;line-height:1.7; }
+.spinner { width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* TOOLTIP */
+.tip { position:fixed;background:var(--s3);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:10px 13px;font-size:11px;color:var(--t2);pointer-events:none;z-index:200;max-width:220px;line-height:1.5;display:none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">C1</div>
+    <div>
+      <div class="logo-title">CENA 1</div>
+      <div class="logo-sub">Dashboard de Equipe · Vinícius Martins</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="dot load" id="dot"></div>
+      <span class="status-txt" id="stxt">Carregando…</span>
+    </div>
+    <button class="btn" onclick="fetchData()">↻ Atualizar</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="go('org')"       id="tab-org">🌳 Equipe</button>
+  <button class="tab"        onclick="go('timeline')"  id="tab-timeline">📅 Prazos</button>
+  <button class="tab"        onclick="go('deps')"      id="tab-deps">⚠️ Dependências <span class="tab-badge" id="dep-count"></span></button>
+  <button class="tab"        onclick="go('checklist')" id="tab-checklist">✅ Planilha</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- ORG -->
+  <div class="panel active" id="panel-org">
+    <div class="sec-header">
+      <div class="sec-title">Árvore da Equipe</div>
+      <div class="sec-sub">Passe o mouse sobre um nó para ver detalhes · ⚠ = precisa de uma entrega sua</div>
+    </div>
+    <div class="org-wrap" id="orgWrap"></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="panel" id="panel-timeline">
+    <div class="sec-header">
+      <div class="sec-title">Linha do Tempo</div>
+      <div class="sec-sub">Mar 2026 → Jan 2027 · Linha roxa = hoje (Mai/26) · Barra vertical = data em que precisam de você</div>
+    </div>
+    <div class="tl-wrap"><div class="tl-inner" id="tlInner"></div></div>
+  </div>
+
+  <!-- DEPS -->
+  <div class="panel" id="panel-deps">
+    <div class="sec-header">
+      <div class="sec-title">O que cada pessoa precisa de mim</div>
+      <div class="sec-sub">Ordenado por urgência · Entregas que dependem diretamente de Vinícius Martins</div>
+    </div>
+    <div class="deps-grid" id="depsGrid"></div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="panel" id="panel-checklist">
+    <div class="csv-bar" style="flex-wrap:wrap;gap:8px">
+      <span class="csv-label">Aba:</span>
+      <select class="csv-input" id="sheetTab" style="flex:0 0 auto;width:auto;cursor:pointer" onchange="switchSheet()">
+        <option value="">— selecione uma aba —</option>
+        <option value="0">Checklist CENA 1</option>
+        <option value="1237169075">Dashboard</option>
+        <option value="2113525821">Equipe</option>
+        <option value="1957691671">Artistas</option>
+        <option value="523356418">Ofícios</option>
+        <option value="1028838045">Briefings Design</option>
+        <option value="878905048">Briefings Social Media</option>
+        <option value="1755882006">Cronograma Geral</option>
+      </select>
+      <span class="status-txt" id="sheet-hint" style="margin-left:4px">← escolha a aba para visualizar</span>
+    </div>
+    <div id="clInner" style="height:calc(100vh - 200px)">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        Selecione uma aba acima para visualizar a planilha.<br>
+        <span style="font-size:10px;opacity:.5;margin-top:6px;display:block">Os dados são carregados direto do Google Sheets.</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<div class="tip" id="tip"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DADOS DA EQUIPE
+// ══════════════════════════════════════════════════════════
+
+const MESES    = ['Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez','Jan'];
+const MES_IDS  = ['2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12','2027-01'];
+const HOJE     = '2026-05';
+
+const CATS = {
+  direcao:     { c:'#afa9ec', bg:'#3c3489', label:'Direção' },
+  producao:    { c:'#5dcba8', bg:'#085041', label:'Produção' },
+  comunicacao: { c:'#f09a7b', bg:'#711b13', label:'Comunicação' },
+  fotografia:  { c:'#85b7eb', bg:'#0c447c', label:'Fotografia' },
+  arte:        { c:'#ef9f27', bg:'#633806', label:'Arte · Figurino' },
+  set:         { c:'#b4b2a9', bg:'#444441', label:'Set · Pós · Web' },
+};
+
+const EQUIPE = [
+  // tier 0
+  { id:'vinicius', nome:'Vinícius Martins',  cargo:'Prod. Executiva · Dir. Audiovisual', cat:'direcao',    tier:0, parent:null,        inicio:'2026-03', fim:'2027-01', precisaDe:null,                        quando:null },
+  // tier 1
+  { id:'dani',     nome:'Dani Ascipriano',   cargo:'Produção Audiovisual',               cat:'producao',   tier:1, parent:'vinicius',  inicio:'2026-03', fim:'2027-01', precisaDe:null,                        quando:null },
+  { id:'mafe',     nome:'Maria Fernanda',    cargo:'Design · Comunicação',               cat:'comunicacao',tier:1, parent:'vinicius',  inicio:'2026-04', fim:'2027-01', precisaDe:'artistas selecionados',     quando:'2026-07' },
+  { id:'math',     nome:'Matheus Lopes',     cargo:'Social Media',                       cat:'comunicacao',tier:1, parent:'vinicius',  inicio:'2026-04', fim:'2027-01', precisaDe:'briefings aprovados',       quando:'2026-05' },
+  { id:'iara',     nome:'Iara Musa',         cargo:'Dir. de Fotografia',                 cat:'fotografia', tier:1, parent:'vinicius',  inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'arte_dir', nome:'A definir',         cargo:'Dir. de Arte · Figurino',            cat:'arte',       tier:1, parent:'vinicius',  inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  // tier 2
+  { id:'prod_art', nome:'A definir',         cargo:'Produção Artística',                 cat:'producao',   tier:2, parent:'dani',      inicio:'2026-05', fim:'2026-08', precisaDe:'artistas selecionados',     quando:'2026-07' },
+  { id:'asst_prod',nome:'A definir',         cargo:'Assist. de Produção',                cat:'producao',   tier:2, parent:'dani',      inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'makingof', nome:'A definir',         cargo:'Making of',                          cat:'fotografia', tier:2, parent:'iara',      inicio:'2026-07', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'still',    nome:'A definir',         cargo:'Fotografia Still',                   cat:'fotografia', tier:2, parent:'iara',      inicio:'2026-07', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'asst_foto',nome:'A definir',         cargo:'Assist. de Fotografia',              cat:'fotografia', tier:2, parent:'iara',      inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'asst_arte',nome:'A definir',         cargo:'Assist. de Arte',                    cat:'arte',       tier:2, parent:'arte_dir',  inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'perform',  nome:'A definir',         cargo:'Dir. de Performance',                cat:'arte',       tier:2, parent:'arte_dir',  inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'stylist',  nome:'A definir',         cargo:'Stylist',                            cat:'arte',       tier:2, parent:'arte_dir',  inicio:'2026-06', fim:'2026-08', precisaDe:null,                        quando:null },
+  { id:'montagem', nome:'A definir',         cargo:'Montagem e Edição',                  cat:'set',        tier:2, parent:'vinicius',  inicio:'2026-09', fim:'2026-12', precisaDe:'arquivos brutos',           quando:'2026-08' },
+  { id:'cor',      nome:'A definir',         cargo:'Colorização',                        cat:'set',        tier:2, parent:'montagem',  inicio:'2026-11', fim:'2027-01', precisaDe:null,                        quando:null },
+  { id:'tais',     nome:'Taís Gomes',        cargo:'Desenvolvimento Web',                cat:'set',        tier:2, parent:'vinicius',  inicio:'2026-03', fim:'2027-01', precisaDe:'textos e aprovações',       quando:'2026-05', voluntaria:true },
+  { id:'legenda',  nome:'A definir',         cargo:'Legendagem',                         cat:'set',        tier:2, parent:'montagem',  inicio:'2026-12', fim:'2027-01', precisaDe:null,                        quando:null },
+];
+
+const byId = {};
+EQUIPE.forEach(e => byId[e.id] = e);
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+
+function mesIdx(m) { return MES_IDS.indexOf(m); }
+
+function monthDiff(a, b) {
+  const [ay,am] = a.split('-').map(Number);
+  const [by,bm] = b.split('-').map(Number);
+  return (by-ay)*12 + (bm-am);
+}
+
+function fmtMes(m) {
+  if (!m) return '—';
+  const i = mesIdx(m);
+  return i >= 0 ? MESES[i]+'/'+m.slice(2,4) : m;
+}
+
+function urgency(quando) {
+  if (!quando) return null;
+  const diff = monthDiff(HOJE, quando);
+  if (diff <= 0) return { cls:'urg-red',   bcls:'badge-red',   lbl:'🔴 Vencido' };
+  if (diff <= 1) return { cls:'urg-amber', bcls:'badge-amber', lbl:'🟠 Urgente' };
+  if (diff <= 3) return { cls:'urg-yellow',bcls:'badge-yellow',lbl:'🟡 Próximo' };
+  return             { cls:'urg-green', bcls:'badge-green', lbl:'🟢 OK' };
+}
+
+function initials(node) {
+  if (node.nome !== 'A definir')
+    return node.nome.split(' ').slice(0,2).map(w=>w[0]).join('');
+  return node.cargo.replace('·','').trim().slice(0,2).toUpperCase();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════
+
+function go(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════
+// ORG TREE
+// ══════════════════════════════════════════════════════════
+
+function renderOrg() {
+  const NW = 148, NH = 58, HG = 14, VG = 64, PAD = 32;
+  const tiers = [
+    EQUIPE.filter(e => e.tier===0),
+    EQUIPE.filter(e => e.tier===1),
+    EQUIPE.filter(e => e.tier===2),
+  ];
+
+  function tierWidth(nodes) { return nodes.length*(NW+HG)-HG; }
+
+  const totalW = Math.max(...tiers.map(t => tierWidth(t))) + PAD*2;
+  const totalH = PAD + tiers.length*(NH+VG) + PAD;
+
+  function positionTier(nodes, y) {
+    const tw = tierWidth(nodes);
+    const sx = (totalW - tw) / 2;
+    return nodes.map((n,i) => ({ ...n, x: sx + i*(NW+HG), y }));
+  }
+
+  const pos = [
+    ...positionTier(tiers[0], PAD),
+    ...positionTier(tiers[1], PAD+NH+VG),
+    ...positionTier(tiers[2], PAD+(NH+VG)*2),
+  ];
+  const pById = {};
+  pos.forEach(n => pById[n.id] = n);
+
+  let s = `<svg viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}" xmlns="http://www.w3.org/2000/svg" class="org-svg">`;
+
+  // Edges
+  pos.forEach(n => {
+    if (!n.parent || !pById[n.parent]) return;
+    const p = pById[n.parent];
+    const x1=p.x+NW/2, y1=p.y+NH, x2=n.x+NW/2, y2=n.y;
+    const my=(y1+y2)/2;
+    s += `<path d="M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+  });
+
+  // Nodes
+  pos.forEach(n => {
+    const cat = CATS[n.cat];
+    const cx = n.x+NW/2;
+    const hasDep = !!n.precisaDe;
+    const isRoot = n.tier===0;
+    const sw = isRoot ? 1.5 : 0.6;
+
+    // Card
+    s += `<g class="org-node" data-id="${n.id}" style="cursor:default">`;
+    s += `<rect x="${n.x}" y="${n.y}" width="${NW}" height="${NH}" rx="6" fill="${cat.bg}" stroke="${cat.c}" stroke-width="${sw}" stroke-opacity=".65"/>`;
+
+    // Name
+    const dispName = n.nome==='A definir' ? '(a definir)' : n.nome.split(' ').slice(0,2).join(' ');
+    const nameColor = n.nome==='A definir' ? cat.c+'88' : cat.c;
+    const nameWeight = isRoot ? '700' : '600';
+    s += `<text x="${cx}" y="${n.y+(hasDep?20:30)}" text-anchor="middle" fill="${nameColor}" font-size="${isRoot?13:11}" font-weight="${nameWeight}" font-family="system-ui">${esc(dispName)}</text>`;
+
+    // Role
+    const shortRole = n.cargo.length>22 ? n.cargo.slice(0,21)+"…" : n.cargo;
+    const roleLabel = (n.voluntaria ? "★ voluntária · " : "") + shortRole;
+    const roleOpacity = n.voluntaria ? ".85" : ".55";
+    s += `<text x="${cx}" y="${n.y+(hasDep?34:45)}" text-anchor="middle" fill="${cat.c}" fill-opacity="${roleOpacity}" font-size="9" font-family="system-ui">${esc(roleLabel)}</text>`;
+
+    // Dep badge
+    if (hasDep) {
+      s += `<rect x="${n.x+6}" y="${n.y+NH-16}" width="${NW-12}" height="13" rx="3" fill="rgba(255,255,255,.05)"/>`;
+      s += `<text x="${cx}" y="${n.y+NH-8}" text-anchor="middle" fill="rgba(255,200,100,.55)" font-size="8.5" font-family="system-ui">⚠ precisa: ${fmtMes(n.quando)}</text>`;
+    }
+
+    s += `</g>`;
+  });
+
+  s += `</svg>`;
+  document.getElementById('orgWrap').innerHTML = s;
+
+  // Tooltip
+  document.querySelectorAll('.org-node').forEach(el => {
+    const n = pById[el.dataset.id];
+    if (!n) return;
+    const cat = CATS[n.cat];
+    el.addEventListener('mouseenter', e => {
+      const u = n.quando ? urgency(n.quando) : null;
+      let html = `<strong style="color:${cat.c}">${n.nome}</strong><br><span style="color:var(--t3)">${n.cargo}</span>`;
+      if (n.precisaDe) {
+        html += `<br><br><span style="color:${u?u.cls.replace('urg-','var(--')+'':'var(--amber)'}">⚠ Precisa de mim:</span><br>${n.precisaDe}<br><span style="color:var(--t3)">até ${fmtMes(n.quando)}</span>`;
+      }
+      html += `<br><br><span style="color:var(--t3)">Prazo: ${fmtMes(n.fim)}</span>`;
+      showTip(e, html);
+    });
+    el.addEventListener('mousemove', moveTip);
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// TIMELINE
+// ══════════════════════════════════════════════════════════
+
+function renderTimeline() {
+  const N = MES_IDS.length;
+  const nowIdx = mesIdx(HOJE);
+  let h = '';
+
+  // Header months
+  h += `<div class="tl-header-row"><div></div><div class="tl-months">`;
+  MES_IDS.forEach((m,i) => {
+    const isCurr = m===HOJE;
+    h += `<div class="tl-month${isCurr?' now':''}">
+      ${MESES[i]}<br><span style="font-size:8px;opacity:.5">${m.slice(2,4)}</span>
+    </div>`;
+  });
+  h += `</div></div>`;
+
+  // Rows — filter to meaningful entries
+  const rows = EQUIPE.filter(e => e.inicio && e.fim);
+  rows.forEach(n => {
+    const cat = CATS[n.cat];
+    const iS = mesIdx(n.inicio), iE = mesIdx(n.fim);
+    const lPct = iS<0 ? 0 : (iS/N*100);
+    const wPct = (iS<0||iE<0) ? 0 : ((iE-iS+1)/N*100);
+    const nowPct = nowIdx>=0 ? ((nowIdx+0.5)/N*100) : -1;
+
+    const isUndef = n.nome==='A definir';
+    const dispName = isUndef ? n.cargo.split('·')[0].trim() : n.nome.split(' ')[0];
+
+    h += `<div class="tl-row">
+      <div class="tl-person">
+        <div class="tl-name" style="${isUndef?'opacity:.45;font-style:italic':''}">${isUndef?n.cargo:n.nome}</div>
+        ${!isUndef ? `<div class="tl-role">${n.cargo}</div>` : ''}
+      </div>
+      <div class="tl-bars">`;
+
+    // Grid
+    MES_IDS.forEach((_,i) => {
+      h += `<div class="tl-grid" style="left:${i/N*100}%"></div>`;
+    });
+
+    // Now
+    if (nowPct>=0) h += `<div class="tl-now" style="left:${nowPct}%"></div>`;
+
+    // Bar
+    if (wPct>0) {
+      h += `<div class="tl-bar" style="left:${lPct}%;width:${wPct}%;background:${cat.bg};border:1px solid ${cat.c}22;color:${cat.c}">`;
+      if (wPct>8) h += esc(dispName);
+      h += `</div>`;
+      h += `<div class="tl-dot" style="left:${lPct+wPct}%;top:50%;transform:translate(-50%,-50%);background:${cat.c};border-color:var(--bg)"></div>`;
+    }
+
+    // Dep marker
+    if (n.quando) {
+      const iD = mesIdx(n.quando);
+      if (iD>=0) {
+        const dPct = (iD+0.5)/N*100;
+        h += `<div class="tl-dep" style="left:${dPct}%;background:${cat.c}99"></div>`;
+      }
+    }
+
+    h += `</div></div>`;
+  });
+
+  // Legend
+  h += `<div class="tl-legend">
+    <div class="tl-legend-item"><div style="width:1px;height:12px;background:rgba(175,169,236,.3)"></div>Hoje (Mai/26)</div>
+    <div class="tl-legend-item"><div style="width:2px;height:10px;background:rgba(255,255,255,.3);border-radius:1px"></div>Precisa de mim</div>`;
+  Object.values(CATS).forEach(v => {
+    h += `<div class="tl-legend-item"><div style="width:10px;height:10px;background:${v.bg};border:1px solid ${v.c}55;border-radius:2px"></div>${v.label}</div>`;
+  });
+  h += `</div>`;
+
+  document.getElementById('tlInner').innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════════
+// DEPENDENCIES
+// ══════════════════════════════════════════════════════════
+
+function renderDeps() {
+  const withDep  = EQUIPE.filter(e => e.precisaDe).sort((a,b)=>(a.quando||'9999').localeCompare(b.quando||'9999'));
+  const noDep    = EQUIPE.filter(e => !e.precisaDe && e.tier>0);
+
+  // Update badge
+  const badge = document.getElementById('dep-count');
+  badge.textContent = withDep.length;
+
+  let h = '';
+  withDep.forEach(n => {
+    const cat = CATS[n.cat];
+    const ini = initials(n);
+    const u   = urgency(n.quando);
+
+    h += `<div class="dep-card" style="border-color:${cat.c}22">
+      <div class="dep-head" style="background:${cat.bg}22">
+        <div class="dep-av" style="background:${cat.bg};color:${cat.c};border:1px solid ${cat.c}44">${ini}</div>
+        <div class="dep-info">
+          <div class="dep-name">${n.nome!=='A definir' ? esc(n.nome) : esc(n.cargo)}${n.voluntaria ? ' <span style="font-size:9px;background:rgba(180,178,169,.15);color:var(--stone);padding:1px 5px;border-radius:3px;font-weight:500;vertical-align:middle">voluntária</span>' : ''}</div>
+          <div class="dep-role">${n.nome!=='A definir' ? esc(n.cargo) : ''}</div>
+        </div>
+        <span class="badge ${u?u.bcls:'badge-green'}">${u?u.lbl:'OK'}</span>
+      </div>
+      <div class="dep-body">
+        <div class="dep-item">
+          <div class="dep-ico">📎</div>
+          <div>
+            <div class="dep-what">${esc(n.precisaDe)}</div>
+            <div class="dep-when ${u?u.cls:'urg-green'}">até ${fmtMes(n.quando)}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // No-dep block
+  if (noDep.length) {
+    h += `<div class="no-deps" style="border-color:rgba(255,255,255,.05)">
+      <div class="no-deps-title">Sem entregas pendentes de mim agora:</div>
+      <div class="tag-chips">`;
+    noDep.forEach(n => {
+      const cat = CATS[n.cat];
+      h += `<span class="chip" style="background:${cat.bg}33;color:${cat.c};border:1px solid ${cat.c}22">${n.nome!=='A definir'?esc(n.nome):esc(n.cargo)}</span>`;
+    });
+    h += `</div></div>`;
+  }
+
+  document.getElementById('depsGrid').innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════════
+// PLANILHA — IFRAME
+// ══════════════════════════════════════════════════════════
+
+const BASE_ID = '2PACX-1vSYky4RdKlyNV7Wt-fw9GOL4VUHFh-bSHxkNlSqcQraueypOOLTPVnb9_EBRbVRpNL0-IPXPNtcFavA';
+
+function switchSheet() {
+  const gid = document.getElementById('sheetTab').value;
+  const el  = document.getElementById('clInner');
+  const hint = document.getElementById('sheet-hint');
+  if (!gid) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div>Selecione uma aba acima.<br><span style="font-size:10px;opacity:.5;margin-top:6px;display:block">Os dados são carregados direto do Google Sheets.</span></div>`;
+    hint.textContent = '← escolha a aba para visualizar';
+    return;
+  }
+  const url = `https://docs.google.com/spreadsheets/d/e/${BASE_ID}/pub?gid=${gid}&single=true&output=html`;
+  el.innerHTML = `
+    <div style="position:relative;height:calc(100vh - 200px)">
+      <iframe src="${url}" 
+        style="width:100%;height:100%;border:none;border-radius:6px;background:#fff;display:block"
+        onload="this.previousElementSibling.style.display='none'"
+      ></iframe>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--t3);font-size:12px;background:var(--s1);border-radius:6px">
+        <div class="spinner"></div>Carregando aba…
+      </div>
+    </div>`;
+  hint.textContent = 'abrindo no Google Sheets…';
+  setStatus('live', 'Planilha carregada');
+}
+
+function fetchData() { switchSheet(); }
+
+function setStatus(state, msg) {
+  const d = document.getElementById('dot');
+  const t = document.getElementById('stxt');
+  d.className = 'dot' + (state==='live'?' live':state==='err'?' err':' load');
+  t.textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════════
+// TOOLTIP
+// ══════════════════════════════════════════════════════════
+
+function showTip(e, html) {
+  const el = document.getElementById('tip');
+  el.innerHTML = html;
+  el.style.display = 'block';
+  moveTip(e);
+}
+function moveTip(e) {
+  const el = document.getElementById('tip');
+  el.style.left = (e.clientX+14)+'px';
+  el.style.top  = (e.clientY-8)+'px';
+}
+function hideTip() { document.getElementById('tip').style.display='none'; }
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+
+renderOrg();
+renderTimeline();
+renderDeps();
+setStatus('live', 'Equipe carregada');
+</script>
+</body>
+</html>
